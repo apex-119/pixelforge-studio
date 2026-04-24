@@ -32,14 +32,27 @@ def apply_filter(image, filter_type, **kwargs):
         img = cv2.bitwise_not(img)
 
     elif filter_type == "sepia":
-        # Ensure 3-channel image
+    # Ensure correct dtype
+        img = img.astype(np.uint8)
+    
+        # Handle grayscale → convert to RGB
         if len(img.shape) == 2:
             img = cv2.cvtColor(img, cv2.COLOR_GRAY2RGB)
-
-        kernel = np.array([[0.272, 0.534, 0.131],
-                           [0.349, 0.686, 0.168],
-                           [0.393, 0.769, 0.189]])
-
+    
+        # Handle RGBA (4 channels) → convert to RGB
+        elif len(img.shape) == 3 and img.shape[2] == 4:
+            img = cv2.cvtColor(img, cv2.COLOR_RGBA2RGB)
+    
+        # Final safety check
+        if len(img.shape) != 3 or img.shape[2] != 3:
+            raise ValueError(f"Invalid image shape for sepia: {img.shape}")
+    
+        kernel = np.array([
+            [0.272, 0.534, 0.131],
+            [0.349, 0.686, 0.168],
+            [0.393, 0.769, 0.189]
+        ], dtype=np.float32)
+    
         img = cv2.transform(img, kernel)
         img = np.clip(img, 0, 255).astype(np.uint8)
 
